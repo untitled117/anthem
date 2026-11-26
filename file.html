@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="anthem">
+  <title>@ anthem</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Unbounded:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --text: #fff;
+      --muted: rgba(255, 255, 255, .62);
+      --card-bg: rgba(255, 255, 255, .045);
+      --card-border: rgba(255, 255, 255, .16);
+      --accent: #9b6cff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: var(--text);
+      font-family: "Unbounded", system-ui, sans-serif;
+    }
+
+    #bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(24px) brightness(.35);
+      transform: scale(1.08);
+      transition: filter 1.2s ease, transform 1.2s ease;
+    }
+
+    body.entered #bg {
+      filter: none;
+      transform: none;
+    }
+
+    #shade {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: rgba(0, 0, 0, .28);
+    }
+
+    #rain {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    body.entered #rain {
+      opacity: 1;
+    }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-content: center;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: center;
+      cursor: pointer;
+      transition: opacity .8s ease, visibility .8s;
+    }
+
+    body.entered #splash {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #splash .enter {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+
+    #splash .sub {
+      margin-top: .6rem;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 300;
+    }
+
+    #splash:hover .enter {
+      text-shadow: 0 0 18px rgba(255, 255, 255, .7);
+    }
+
+    #splash:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -8px;
+    }
+
+    main {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      padding: 1.5rem;
+      perspective: 900px;
+    }
+
+    .card {
+      position: relative;
+      width: min(700px, 100%);
+      padding: 1.6rem 1.8rem 1.4rem;
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: scale(.96);
+      transition: opacity 1s ease .5s, transform .4s ease 0s;
+    }
+
+    body.entered .card {
+      opacity: 1;
+      transform: none;
+    }
+
+    .card.tilting {
+      transition: none;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+    }
+
+    .avatar {
+      width: 120px;
+      height: 120px;
+      flex: none;
+      border: 2px solid rgba(255, 255, 255, .28);
+      border-radius: 50%;
+      background: #222;
+      object-fit: cover;
+    }
+
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 5vw, 2.3rem);
+      font-weight: 600;
+      letter-spacing: .01em;
+      line-height: 1.1;
+      text-shadow: 0 0 14px rgba(255, 255, 255, .35);
+    }
+
+    .joined {
+      margin-top: .4rem;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 300;
+    }
+
+    .badge {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      overflow: hidden;
+      border: 1px solid rgba(190, 155, 255, .45);
+      border-radius: 999px;
+      background: rgba(124, 58, 237, .18);
+      color: #e3d5ff;
+      cursor: pointer;
+      transition: width .25s ease, gap .25s ease, background .25s ease;
+    }
+
+    .badge img {
+      width: 27px;
+      height: 27px;
+      flex: none;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .badge span {
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      font-size: .62rem;
+      transition: max-width .25s ease, opacity .2s ease;
+      font-family: "Nunito", sans-serif;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .badge:hover,
+    .badge:focus-visible {
+      width: 84px;
+      gap: .4rem;
+      background: rgba(124, 58, 237, .34);
+    }
+
+    .badge:hover span,
+    .badge:focus-visible span {
+      max-width: 42px;
+      opacity: 1;
+    }
+
+    .badge:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 3px;
+    }
+
+    .views {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      margin-top: 1rem;
+      padding: .5rem .75rem;
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, .18);
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .views svg {
+      width: 16px;
+      height: 16px;
+      color: #d9c5ff;
+    }
+
+    .views strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .links {
+      display: flex;
+      gap: .65rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .links a {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      gap: .55rem;
+      padding: .55rem .9rem;
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .05);
+      color: var(--text);
+      font-size: .72rem;
+      text-decoration: none;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+
+    .links a:hover,
+    .links a:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, .38);
+      background: rgba(255, 255, 255, .13);
+      outline: none;
+    }
+
+    .links svg {
+      width: 17px;
+      height: 17px;
+      flex: none;
+    }
+
+    .guns-logo-img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+
+    @media (max-width: 520px) {
+      .top {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .name-row,
+      .links {
+        justify-content: center;
+      }
+
+      .avatar {
+        width: 104px;
+        height: 104px;
+      }
+
+      .views {
+        display: flex;
+        width: fit-content;
+        margin-right: auto;
+        margin-left: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition-duration: .01ms !important;
+      }
+
+      #rain {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <video id="bg" src="background.mp4" autoplay muted loop playsinline preload="auto"></video>
+  <audio id="music" src="music.mp3" loop preload="auto"></audio>
+  <audio id="gothSound" src="goth.mp3" preload="auto"></audio>
+
+  <div id="shade"></div>
+  <canvas id="rain" aria-hidden="true"></canvas>
+
+  <button id="splash" type="button" aria-label="Enter site">
+    <span class="enter">[ Enter ]</span>
+    <span class="sub">it gets worse, i know it hurts...</span>
+  </button>
+
+  <main>
+    <section class="card" id="card">
+      <div class="top">
+        <img class="avatar" src="avatar.png" alt="anthem avatar">
+
+        <div>
+          <div class="name-row">
+            <h1>anthem</h1>
+
+            <button class="badge" id="gothBadge" type="button" aria-label="Goth badge">
+              <img src="goth.png" alt="">
+              <span>goth</span>
+            </button>
+          </div>
+
+          <p class="joined">Joined almost 2 years ago</p>
+        </div>
+      </div>
+
+      <div class="views" title="Displayed profile view count">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+        </svg>
+        <span><strong id="viewCount">4,947</strong> profile views</span>
+      </div>
+
+      <nav class="links" aria-label="Social links">
+        <a href="https://discord.com/users/1526371943891210300"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Discord profile">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M19.7 5.4A18.5 18.5 0 0 0 15.1 4l-.6 1.2a17 17 0 0 0-5 0L8.9 4a18.5 18.5 0 0 0-4.6 1.4C1.4 9.7.6 13.9 1 18a18.7 18.7 0 0 0 5.7 2.9l1.2-2a12 12 0 0 1-1.9-.9l.5-.4a13.3 13.3 0 0 0 11 0l.5.4a12 12 0 0 1-1.9.9l1.2 2A18.7 18.7 0 0 0 23 18c.5-4.8-.8-8.9-3.3-12.6ZM8.5 15.4c-1.1 0-2-.9-2-2.1s.9-2.1 2-2.1 2 .9 2 2.1-.9 2.1-2 2.1Zm7 0c-1.1 0-2-.9-2-2.1s.9-2.1 2-2.1 2 .9 2 2.1-.9 2.1-2 2.1Z"/>
+          </svg>
+          <span>Discord</span>
+        </a>
+
+        <a href="https://guns.lol/odr"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="guns.lol profile">
+          <img class="guns-logo-img" src="guns.png" alt="">
+          <span>guns.lol</span>
+        </a>
+      </nav>
+    </section>
+  </main>
+
+  <script>
+    const START_VIEWS = 4947;
+    const splash = document.getElementById("splash");
+    const body = document.body;
+    const bg = document.getElementById("bg");
+    const music = document.getElementById("music");
+    const card = document.getElementById("card");
+
+    // Animated browser tab title.
+    const tabText = "@ a n t h e m";
+    let titleIndex = 0;
+
+    function typeTabTitle() {
+      document.title = tabText.slice(0, titleIndex);
+      titleIndex++;
+
+      if (titleIndex > tabText.length) {
+        titleIndex = 0;
+        setTimeout(typeTabTitle, 1100);
+      } else {
+        setTimeout(typeTabTitle, 220);
+      }
+    }
+
+    typeTabTitle();
+
+    // Enter site: start the background video, music, and view-count animation.
+    splash.addEventListener("click", () => {
+      if (body.classList.contains("entered")) return;
+
+      body.classList.add("entered");
+
+      bg.play().catch(() => {});
+
+      music.volume = 0.15;
+      music.play().catch(() => {
+        // Some browsers may require the visitor to click again before playing audio.
+      });
+
+      countUp();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (
+        !body.classList.contains("entered") &&
+        (event.key === "Enter" || event.key === " ")
+      ) {
+        event.preventDefault();
+        splash.click();
+      }
+    });
+
+    // The badge sound is an optional local audio file named goth.mp3.
+    document.getElementById("gothBadge").addEventListener("click", () => {
+      const sound = document.getElementById("gothSound");
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    });
+
+    // Display-only count; it does not track actual visitors.
+    function countUp() {
+      const element = document.getElementById("viewCount");
+      const start = performance.now();
+      const duration = 1000;
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const value = Math.round(
+          START_VIEWS * (1 - Math.pow(1 - progress, 3))
+        );
+
+        element.textContent = value.toLocaleString("en-US");
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // Subtle card tilt on mouse devices.
+    card.addEventListener("pointermove", event => {
+      if (
+        !body.classList.contains("entered") ||
+        matchMedia("(pointer: coarse)").matches
+      ) {
+        return;
+      }
+
+      const rect = card.getBoundingClientRect();
+
+      const x =
+        (event.clientX - rect.left) / rect.width - 0.5;
+
+      const y =
+        (event.clientY - rect.top) / rect.height - 0.5;
+
+      card.classList.add("tilting");
+
+      card.style.transform =
+        `perspective(900px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg)`;
+    });
+
+    card.addEventListener("pointerleave", () => {
+      card.classList.remove("tilting");
+      card.style.transform = "";
+    });
+
+
+    // Heavy, long-streak rain.
+    const canvas = document.getElementById("rain");
+    const context = canvas.getContext("2d");
+    let width = 0;
+    let height = 0;
+    let drops = [];
+
+    function resizeRain() {
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+
+      width = innerWidth;
+      height = innerHeight;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+
+      const amount = Math.round(width * height / 12200);
+
+      drops = Array.from({ length: amount }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        length: Math.random() * 26 + 18,
+        speed: Math.random() * 9 + 8,
+        drift: Math.random() * 1.2 + 0.4
+      }));
+    }
+
+    function drawRain() {
+      context.clearRect(0, 0, width, height);
+      context.strokeStyle = "rgba(210, 220, 255, .38)";
+      context.lineWidth = 1.2;
+      context.beginPath();
+
+      for (const drop of drops) {
+        context.moveTo(drop.x, drop.y);
+        context.lineTo(drop.x - drop.drift, drop.y + drop.length);
+
+        drop.y += drop.speed;
+        drop.x -= drop.drift;
+
+        if (drop.y > height + drop.length) {
+          drop.y = -drop.length;
+          drop.x = Math.random() * width;
+        }
+
+        if (drop.x < -5) {
+          drop.x = width + 5;
+        }
+      }
+
+      context.stroke();
+      requestAnimationFrame(drawRain);
+    }
+
+    addEventListener("resize", resizeRain);
+    resizeRain();
+    drawRain();
+  </script>
+</body>
+</html>
